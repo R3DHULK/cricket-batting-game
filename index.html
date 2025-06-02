@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cricket Batting Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #2E8B57, #228B22);
+            color: white;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98FB98 70%, #228B22 100%);
+        }
+
+        .pitch {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 80vh;
+            background: linear-gradient(to bottom, #8B4513 0%, #DEB887 50%, #8B4513 100%);
+            border-radius: 20px 20px 0 0;
+            overflow: hidden;
+        }
+
+        .pitch-lines {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image:
+                repeating-linear-gradient(90deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(255, 255, 255, 0.1) 10px,
+                    rgba(255, 255, 255, 0.1) 12px);
+        }
+
+        .stumps {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 60px;
+            background: #8B4513;
+            border-radius: 5px;
+        }
+
+        .stumps::before,
+        .stumps::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 60px;
+            background: #8B4513;
+            border-radius: 3px;
+        }
+
+        .stumps::before {
+            left: -12px;
+        }
+
+        .stumps::after {
+            right: -12px;
+        }
+
+        .batsman {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 80px;
+            background: #FF6B6B;
+            border-radius: 20px 20px 5px 5px;
+            transition: all 0.3s ease;
+        }
+
+        .batsman.shot-defense {
+            transform: translateX(-50%) scale(0.9);
+        }
+
+        .batsman.shot-drive {
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        .batsman.shot-cut {
+            transform: translateX(-50%) translateX(15px) rotate(10deg);
+        }
+
+        .batsman.shot-pull {
+            transform: translateX(-50%) translateX(-15px) rotate(-10deg);
+        }
+
+        .batsman.shot-sweep {
+            transform: translateX(-50%) translateY(10px) rotate(5deg);
+        }
+
+        .bat {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+            width: 8px;
+            height: 50px;
+            background: #8B4513;
+            border-radius: 4px;
+            transition: transform 0.2s ease;
+            transform-origin: bottom;
+        }
+
+        .ball {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle at 30% 30%, #FF6B6B, #8B0000);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+            transition: all 0.1s ease;
+        }
+
+        .ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .score-board {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stats {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            background: #FF6B6B;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #FF5252;
+            transform: scale(1.05);
+        }
+
+        .shot-buttons {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .shot-btn {
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            border-radius: 15px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .shot-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        .shot-btn:active {
+            transform: scale(0.95);
+        }
+
+        .game-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 200;
+            backdrop-filter: blur(10px);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .boundary-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+            animation: boundaryFlash 1s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes boundaryFlash {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes batSwing {
+            0% {
+                transform: translateX(-50%) rotate(45deg);
+            }
+
+            30% {
+                transform: translateX(-50%) rotate(-45deg) scale(1.2);
+            }
+
+            70% {
+                transform: translateX(-50%) rotate(-20deg) scale(1.1);
+            }
+
+            100% {
+                transform: translateX(-50%) rotate(45deg);
+            }
+        }
+
+        @keyframes batsmanMove {
+            0% {
+                transform: translateX(-50%);
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(-5px) scale(1.1);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .bat-swing {
+            animation: batSwing 0.4s ease-in-out;
+        }
+
+        .batsman-active {
+            animation: batsmanMove 0.4s ease-in-out;
+        }
+
+        .bowler {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 60px;
+            background: #4CAF50;
+            border-radius: 15px 15px 5px 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-container">
+        <div class="pitch">
+            <div class="pitch-lines"></div>
+            <div class="bowler"></div>
+            <div class="stumps"></div>
+            <div class="batsman">
+                <div class="bat" id="bat"></div>
+            </div>
+        </div>
+
+        <div class="ui-container">
+            <div class="score-board">
+                <div class="score">Score: <span id="score">0</span></div>
+                <div class="stats">
+                    Balls: <span id="balls">0</span> |
+                    4s: <span id="fours">0</span> |
+                    6s: <span id="sixes">0</span>
+                </div>
+            </div>
+            <div class="controls">
+                <button class="btn" onclick="startGame()">New Game</button>
+                <button class="btn" onclick="pauseGame()">Pause</button>
+            </div>
+        </div>
+
+        <div class="shot-buttons">
+            <button class="shot-btn" onclick="playShot('defense')">Defense</button>
+            <button class="shot-btn" onclick="playShot('drive')">Drive</button>
+            <button class="shot-btn" onclick="playShot('cut')">Cut</button>
+            <button class="shot-btn" onclick="playShot('pull')">Pull</button>
+            <button class="shot-btn" onclick="playShot('sweep')">Sweep</button>
+        </div>
+
+        <div class="game-message hidden" id="gameMessage">
+            <h2>Cricket Batting Game</h2>
+            <p>Time your shots against the incoming deliveries!</p>
+            <p>Different shots work better for different ball positions.</p>
+            <button class="btn" onclick="startGame()">Start Game</button>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            score: 0,
+            balls: 0,
+            fours: 0,
+            sixes: 0,
+            isPlaying: false,
+            ballInAir: false,
+            currentBall: null,
+            gameInterval: null
+        };
+
+        const shotTypes = {
+            defense: { timing: 0.3, power: 0.1, accuracy: 0.9 },
+            drive: { timing: 0.5, power: 0.7, accuracy: 0.6 },
+            cut: { timing: 0.4, power: 0.6, accuracy: 0.7 },
+            pull: { timing: 0.6, power: 0.8, accuracy: 0.5 },
+            sweep: { timing: 0.7, power: 0.6, accuracy: 0.6 }
+        };
+
+        function updateScore() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('balls').textContent = gameState.balls;
+            document.getElementById('fours').textContent = gameState.fours;
+            document.getElementById('sixes').textContent = gameState.sixes;
+        }
+
+        function startGame() {
+            gameState = {
+                score: 0,
+                balls: 0,
+                fours: 0,
+                sixes: 0,
+                isPlaying: true,
+                ballInAir: false,
+                currentBall: null,
+                gameInterval: null
+            };
+
+            document.getElementById('gameMessage').classList.add('hidden');
+            updateScore();
+
+            // Start bowling deliveries
+            setTimeout(bowlDelivery, 2000);
+        }
+
+        function pauseGame() {
+            gameState.isPlaying = !gameState.isPlaying;
+            if (!gameState.isPlaying && gameState.gameInterval) {
+                clearInterval(gameState.gameInterval);
+            }
+        }
+
+        function bowlDelivery() {
+            if (!gameState.isPlaying) return;
+
+            gameState.ballInAir = true;
+            gameState.balls++;
+            updateScore();
+
+            // Create ball element
+            const ball = document.createElement('div');
+            ball.className = 'ball';
+            ball.style.top = '80px';
+            ball.style.left = '50%';
+            ball.style.transform = 'translateX(-50%)';
+            document.querySelector('.pitch').appendChild(ball);
+
+            gameState.currentBall = ball;
+
+            // Animate ball movement - straight line towards batsman
+            let position = 80;
+            const speed = Math.random() * 2 + 3; // Speed between 3-5
+            const pitchHeight = document.querySelector('.pitch').offsetHeight;
+            const targetPosition = pitchHeight - 140; // Stop just before batsman
+
+            const ballInterval = setInterval(() => {
+                position += speed * 6;
+                ball.style.top = position + 'px';
+
+                // Keep ball centered horizontally
+                ball.style.left = '50%';
+                ball.style.transform = 'translateX(-50%)';
+
+                if (position >= targetPosition) {
+                    // Ball reached batsman area
+                    clearInterval(ballInterval);
+                    gameState.ballInAir = false;
+
+                    // Remove ball after short delay
+                    setTimeout(() => {
+                        if (ball.parentNode) {
+                            ball.parentNode.removeChild(ball);
+                        }
+                        gameState.currentBall = null;
+
+                        // Bowl next delivery
+                        setTimeout(bowlDelivery, Math.random() * 2000 + 2000);
+                    }, 500);
+                }
+            }, 50);
+        }
+
+        function playShot(shotType) {
+            if (!gameState.ballInAir || !gameState.currentBall) {
+                // Allow practice swings even without ball
+                animateBatsman(shotType);
+                return;
+            }
+
+            const bat = document.getElementById('bat');
+            const batsman = document.querySelector('.batsman');
+
+            // Animate batsman and bat
+            animateBatsman(shotType);
+            bat.classList.add('bat-swing');
+
+            setTimeout(() => {
+                bat.classList.remove('bat-swing');
+                batsman.className = 'batsman'; // Reset batsman class
+            }, 400);
+
+            // Calculate shot success based on timing and shot type
+            const shot = shotTypes[shotType];
+            const timing = Math.random();
+            const success = timing < shot.timing + 0.3; // Give more leeway
+
+            if (success) {
+                const runs = calculateRuns(shot, timing);
+                gameState.score += runs;
+
+                if (runs === 4) {
+                    gameState.fours++;
+                    showBoundaryEffect();
+                    showShotMessage("FOUR! Great shot!", shotType);
+                } else if (runs === 6) {
+                    gameState.sixes++;
+                    showBoundaryEffect();
+                    showShotMessage("SIX! What a hit!", shotType);
+                } else {
+                    showShotMessage(`${runs} run${runs > 1 ? 's' : ''}`, shotType);
+                }
+
+                updateScore();
+            } else {
+                showShotMessage("Missed!", shotType);
+            }
+
+            // Remove ball immediately after shot
+            if (gameState.currentBall && gameState.currentBall.parentNode) {
+                gameState.currentBall.parentNode.removeChild(gameState.currentBall);
+                gameState.currentBall = null;
+                gameState.ballInAir = false;
+            }
+        }
+
+        function animateBatsman(shotType) {
+            const batsman = document.querySelector('.batsman');
+            batsman.className = `batsman batsman-active shot-${shotType}`;
+        }
+
+        function calculateRuns(shot, timing) {
+            const powerFactor = shot.power * timing;
+            const luck = Math.random();
+
+            if (powerFactor > 0.7 && luck > 0.7) return 6; // Six
+            if (powerFactor > 0.5 && luck > 0.5) return 4; // Four
+            if (powerFactor > 0.3) return Math.floor(Math.random() * 3) + 1; // 1-3 runs
+            return 1; // Single
+        }
+
+        function showBoundaryEffect() {
+            const effect = document.createElement('div');
+            effect.className = 'boundary-effect';
+            document.querySelector('.game-container').appendChild(effect);
+
+            setTimeout(() => {
+                if (effect.parentNode) {
+                    effect.parentNode.removeChild(effect);
+                }
+            }, 1000);
+        }
+
+        function showShotMessage(message, shotType) {
+            // Create floating message
+            const msgElement = document.createElement('div');
+            msgElement.style.cssText = `
+                position: absolute;
+                top: 40%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                font-size: 18px;
+                font-weight: bold;
+                z-index: 150;
+                pointer-events: none;
+                backdrop-filter: blur(10px);
+                animation: fadeInOut 2s ease-in-out;
+            `;
+            msgElement.textContent = message;
+
+            // Add fade animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeInOut {
+                    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+                    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+                }
+            `;
+            document.head.appendChild(style);
+
+            document.querySelector('.game-container').appendChild(msgElement);
+
+            setTimeout(() => {
+                if (msgElement.parentNode) {
+                    msgElement.parentNode.removeChild(msgElement);
+                }
+                if (style.parentNode) {
+                    style.parentNode.removeChild(style);
+                }
+            }, 2000);
+
+            console.log(`Played ${shotType}: ${message}`);
+        }
+
+        // Initialize game
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('gameMessage').classList.remove('hidden');
+        });
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (!gameState.isPlaying) return;
+
+            switch (e.key.toLowerCase()) {
+                case 'd': playShot('defense'); break;
+                case 's': playShot('drive'); break;
+                case 'a': playShot('cut'); break;
+                case 'w': playShot('pull'); break;
+                case 'e': playShot('sweep'); break;
+                case ' ': e.preventDefault(); playShot('drive'); break;
+            }
+        });
+    </script>
+</body>
+
+</html>
