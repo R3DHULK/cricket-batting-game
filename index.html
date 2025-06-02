@@ -232,15 +232,107 @@
             display: none;
         }
 
-        .boundary-effect {
+        .milestone-celebration {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #8B4513;
+            padding: 40px 50px;
+            border-radius: 25px;
+            text-align: center;
+            z-index: 300;
+            backdrop-filter: blur(15px);
+            border: 3px solid #FFD700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            animation: milestonePopup 4s ease-in-out;
+        }
+
+        .milestone-celebration h2 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .milestone-celebration p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .milestone-celebration .continue-btn {
+            padding: 12px 25px;
+            background: #8B4513;
+            color: #FFD700;
+            border: none;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .milestone-celebration .continue-btn:hover {
+            background: #654321;
+            transform: scale(1.05);
+        }
+
+        @keyframes milestonePopup {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.3);
+            }
+
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+
+            30% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            85% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+        }
+
+        .fireworks {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
-            animation: boundaryFlash 1s ease-out;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 30%, rgba(255, 69, 0, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 30% 80%, rgba(0, 255, 255, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(255, 20, 147, 0.4) 0%, transparent 50%);
+            animation: fireworksShow 3s ease-in-out;
             pointer-events: none;
+        }
+
+        @keyframes fireworksShow {
+
+            0%,
+            100% {
+                opacity: 0;
+            }
+
+            25%,
+            75% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
         }
 
         @keyframes boundaryFlash {
@@ -310,6 +402,17 @@
             background: #4CAF50;
             border-radius: 15px 15px 5px 5px;
         }
+
+        .boundary-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+            animation: boundaryFlash 1s ease-out;
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -362,9 +465,12 @@
             fours: 0,
             sixes: 0,
             isPlaying: false,
+            isPaused: false,
             ballInAir: false,
             currentBall: null,
-            gameInterval: null
+            gameInterval: null,
+            nextBallTimeout: null,
+            lastMilestone: 0
         };
 
         const shotTypes = {
@@ -380,6 +486,114 @@
             document.getElementById('balls').textContent = gameState.balls;
             document.getElementById('fours').textContent = gameState.fours;
             document.getElementById('sixes').textContent = gameState.sixes;
+
+            // Check for milestone achievements
+            checkMilestones();
+        }
+
+        function checkMilestones() {
+            const milestones = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500];
+
+            for (let milestone of milestones) {
+                if (gameState.score >= milestone && gameState.lastMilestone < milestone) {
+                    gameState.lastMilestone = milestone;
+                    showMilestoneCelebration(milestone);
+                    break;
+                }
+            }
+        }
+
+        function showMilestoneCelebration(milestone) {
+            // Pause the game temporarily
+            const wasPaused = gameState.isPaused;
+            gameState.isPaused = true;
+
+            // Clear any pending deliveries
+            if (gameState.nextBallTimeout) {
+                clearTimeout(gameState.nextBallTimeout);
+                gameState.nextBallTimeout = null;
+            }
+
+            // Create fireworks effect
+            const fireworks = document.createElement('div');
+            fireworks.className = 'fireworks';
+            document.querySelector('.game-container').appendChild(fireworks);
+
+            // Create milestone celebration popup
+            const celebration = document.createElement('div');
+            celebration.className = 'milestone-celebration';
+
+            let message = '';
+            let subtitle = '';
+
+            switch (milestone) {
+                case 50:
+                    message = '🏏 HALF CENTURY! 🏏';
+                    subtitle = 'Fantastic batting! You\'ve reached 50 runs!';
+                    break;
+                case 100:
+                    message = '🎉 CENTURY! 🎉';
+                    subtitle = 'Outstanding! A magnificent hundred!';
+                    break;
+                case 150:
+                    message = '🔥 150 UP! 🔥';
+                    subtitle = 'Incredible innings! You\'re on fire!';
+                    break;
+                case 200:
+                    message = '⭐ DOUBLE CENTURY! ⭐';
+                    subtitle = 'Legendary performance! 200 runs!';
+                    break;
+                case 250:
+                    message = '👑 250 RUNS! 👑';
+                    subtitle = 'Absolutely phenomenal batting!';
+                    break;
+                case 300:
+                    message = '🚀 TRIPLE CENTURY! 🚀';
+                    subtitle = 'Unbelievable! You\'re a batting machine!';
+                    break;
+                default:
+                    message = `🏆 ${milestone} RUNS! 🏆`;
+                    subtitle = 'Sensational batting display!';
+            }
+
+            celebration.innerHTML = `
+                <h2>${message}</h2>
+                <p>${subtitle}</p>
+                <button class="continue-btn" onclick="closeMilestoneCelebration(${wasPaused})">Continue Batting!</button>
+            `;
+
+            document.querySelector('.game-container').appendChild(celebration);
+
+            // Auto-close after 4 seconds
+            setTimeout(() => {
+                closeMilestoneCelebration(wasPaused);
+            }, 4000);
+        }
+
+        function closeMilestoneCelebration(wasPreviouslyPaused) {
+            // Remove celebration elements
+            const celebration = document.querySelector('.milestone-celebration');
+            const fireworks = document.querySelector('.fireworks');
+
+            if (celebration && celebration.parentNode) {
+                celebration.parentNode.removeChild(celebration);
+            }
+            if (fireworks && fireworks.parentNode) {
+                fireworks.parentNode.removeChild(fireworks);
+            }
+
+            // Resume game if it wasn't previously paused
+            if (!wasPreviouslyPaused && gameState.isPlaying) {
+                gameState.isPaused = false;
+
+                // Schedule next ball if none in air
+                if (!gameState.ballInAir) {
+                    gameState.nextBallTimeout = setTimeout(bowlDelivery, 1500);
+                }
+            } else if (wasPreviouslyPaused) {
+                // Keep it paused if it was paused before
+                gameState.isPaused = true;
+            }
         }
 
         function startGame() {
@@ -389,27 +603,106 @@
                 fours: 0,
                 sixes: 0,
                 isPlaying: true,
+                isPaused: false,
                 ballInAir: false,
                 currentBall: null,
-                gameInterval: null
+                gameInterval: null,
+                nextBallTimeout: null,
+                lastMilestone: 0
             };
 
             document.getElementById('gameMessage').classList.add('hidden');
+
+            // Reset pause button
+            const pauseBtn = document.querySelector('.controls .btn:nth-child(2)');
+            pauseBtn.textContent = 'Pause';
+            pauseBtn.style.background = '#FF6B6B';
+
+            // Hide pause message if visible
+            showPauseMessage(false);
+
+            // Remove any existing celebrations
+            const existingCelebration = document.querySelector('.milestone-celebration');
+            const existingFireworks = document.querySelector('.fireworks');
+            if (existingCelebration) existingCelebration.remove();
+            if (existingFireworks) existingFireworks.remove();
+
             updateScore();
 
             // Start bowling deliveries
-            setTimeout(bowlDelivery, 2000);
+            gameState.nextBallTimeout = setTimeout(bowlDelivery, 2000);
         }
 
         function pauseGame() {
-            gameState.isPlaying = !gameState.isPlaying;
-            if (!gameState.isPlaying && gameState.gameInterval) {
-                clearInterval(gameState.gameInterval);
+            if (!gameState.isPlaying) return;
+
+            gameState.isPaused = !gameState.isPaused;
+            const pauseBtn = document.querySelector('.controls .btn:nth-child(2)');
+
+            if (gameState.isPaused) {
+                pauseBtn.textContent = 'Resume';
+                pauseBtn.style.background = '#4CAF50';
+
+                // Clear any pending ball deliveries
+                if (gameState.nextBallTimeout) {
+                    clearTimeout(gameState.nextBallTimeout);
+                    gameState.nextBallTimeout = null;
+                }
+
+                // Show pause message
+                showPauseMessage(true);
+            } else {
+                pauseBtn.textContent = 'Pause';
+                pauseBtn.style.background = '#FF6B6B';
+
+                // Hide pause message
+                showPauseMessage(false);
+
+                // Resume game - schedule next ball if none in air
+                if (!gameState.ballInAir) {
+                    gameState.nextBallTimeout = setTimeout(bowlDelivery, 1000);
+                }
+            }
+        }
+
+        function showPauseMessage(show) {
+            let pauseMsg = document.getElementById('pauseMessage');
+
+            if (show) {
+                if (!pauseMsg) {
+                    pauseMsg = document.createElement('div');
+                    pauseMsg.id = 'pauseMessage';
+                    pauseMsg.style.cssText = `
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: rgba(0, 0, 0, 0.9);
+                        color: white;
+                        padding: 30px;
+                        border-radius: 20px;
+                        text-align: center;
+                        z-index: 200;
+                        backdrop-filter: blur(10px);
+                        font-size: 24px;
+                        font-weight: bold;
+                    `;
+                    pauseMsg.innerHTML = `
+                        <h2>Game Paused</h2>
+                        <p>Click Resume to continue</p>
+                    `;
+                    document.querySelector('.game-container').appendChild(pauseMsg);
+                }
+                pauseMsg.style.display = 'block';
+            } else {
+                if (pauseMsg) {
+                    pauseMsg.style.display = 'none';
+                }
             }
         }
 
         function bowlDelivery() {
-            if (!gameState.isPlaying) return;
+            if (!gameState.isPlaying || gameState.isPaused) return;
 
             gameState.ballInAir = true;
             gameState.balls++;
@@ -432,6 +725,11 @@
             const targetPosition = pitchHeight - 140; // Stop just before batsman
 
             const ballInterval = setInterval(() => {
+                if (gameState.isPaused) {
+                    clearInterval(ballInterval);
+                    return;
+                }
+
                 position += speed * 6;
                 ball.style.top = position + 'px';
 
@@ -451,8 +749,10 @@
                         }
                         gameState.currentBall = null;
 
-                        // Bowl next delivery
-                        setTimeout(bowlDelivery, Math.random() * 2000 + 2000);
+                        // Bowl next delivery only if not paused
+                        if (!gameState.isPaused && gameState.isPlaying) {
+                            gameState.nextBallTimeout = setTimeout(bowlDelivery, Math.random() * 2000 + 2000);
+                        }
                     }, 500);
                 }
             }, 50);
