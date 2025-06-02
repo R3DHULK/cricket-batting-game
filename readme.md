@@ -207,7 +207,6 @@ Try to unlock these milestones:
 
 - **Issues**: [GitHub Issues](https://github.com/r3dhulk/cricket-batting-game/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/r3dhulk/cricket-batting-game/discussions)
-- **Email**: your.email@example.com
 
 ## 🙏 Acknowledgments
 
